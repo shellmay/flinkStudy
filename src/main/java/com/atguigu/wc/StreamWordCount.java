@@ -21,9 +21,9 @@ public class StreamWordCount {
         //基于数据流进行转换计算
         DataStream<Tuple2<String, Integer>> resultstream = inputDataStream.flatMap(new WordCount.MyFlatMapper())
                 .keyBy(0)
-                .sum(1);
+                .sum(1).setParallelism(2);
 
-        resultstream.print();
+        resultstream.print().setParallelism(1);
         env.execute();
     }
 
