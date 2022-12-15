@@ -6,6 +6,9 @@ public class SensorReading {
     private Long timestamp;
     private Double temperature;
 
+    public SensorReading() {
+    }
+
     public SensorReading(String id, Long timestamp, Double temperature) {
         this.id = id;
         this.timestamp = timestamp;
