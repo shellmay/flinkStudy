@@ -2,11 +2,14 @@ package com.atguigu.apitest.transform;
 
 import com.atguigu.apitest.beans.SensorReading;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+import javax.xml.crypto.Data;
 
 public class Transform_Test2_RollingAggregation {
 
@@ -40,9 +43,22 @@ public class Transform_Test2_RollingAggregation {
         KeyedStream<SensorReading, Tuple> keyByStream = dataStream.keyBy("id");
         // KeyedStream<SensorReading, String> keyByStream1 = dataStream.keyBy(SensorReading::getId);
 
-        //滚动聚合，取当前最大的温度值
+        //reduce聚合，取最大的温度值，以及当前最新的时间戳
+        DataStream<SensorReading> reduceResoult = keyByStream.reduce(new ReduceFunction<SensorReading>() {
+            @Override
+            public SensorReading reduce(SensorReading value1, SensorReading value2) throws Exception {
+                return new SensorReading(value1.getId(), value2.getTimestamp(), Math.max(value1.getTimestamp(), value2.getTemperature()));
+            }
+        });
+
+        SingleOutputStreamOperator<SensorReading> reduce1Resoult1 = keyByStream.reduce((value1, value2) -> {
+            return new SensorReading(value1.getId(), value2.getTimestamp(), Math.max(value1.getTemperature(), value2.getTemperature()));
+        });
+
         DataStream<SensorReading> temperature = keyByStream.max("temperature");
-        temperature.print();
+        //temperature.print();
+        reduceResoult.print();
+        reduce1Resoult1.print();
         env.execute();
 
     }
