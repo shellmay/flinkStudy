@@ -70,6 +70,11 @@ public class Transform_Test3_MultipleStream {
         resultStream.print();
 
 
+        //union联合多条
+        DataStream<SensorReading> unionStream = highTempStream.union(lowTempStream);
+
+        unionStream.print();
+
         env.execute();
 
 
