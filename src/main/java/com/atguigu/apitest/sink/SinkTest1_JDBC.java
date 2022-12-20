@@ -1,8 +1,10 @@
 package com.atguigu.apitest.sink;
 
 import com.atguigu.apitest.beans.SensorReading;
+import com.atguigu.apitest.source.SourceTest4_UDF;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 
@@ -15,14 +17,16 @@ public class SinkTest1_JDBC {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        //从文件读取数据路径
-        DataStream<String> inputStream = env.readTextFile("/Users/xiaomeichen/study/2022-study/tools_code/flinkStudy/src/main/resources/sensor.txt");
-        //lambda方式
-        DataStream<SensorReading> dataStream = inputStream.map(line -> {
-            String[] sensor = line.split(",");
-
-            return new SensorReading(sensor[0], new Long(sensor[1]), new Double(sensor[2]));
-        });
+//        //从文件读取数据路径
+//        DataStream<String> inputStream = env.readTextFile("/Users/xiaomeichen/study/2022-study/tools_code/flinkStudy/src/main/resources/sensor.txt");
+//        //lambda方式
+//        DataStream<SensorReading> dataStream = inputStream.map(line -> {
+//            String[] sensor = line.split(",");
+//
+//            return new SensorReading(sensor[0], new Long(sensor[1]), new Double(sensor[2]));
+//        });
+//
+        DataStream<SensorReading> dataStream= env.addSource(new SourceTest4_UDF.MySensorSource());
         dataStream.addSink(new MyJDBCSink());
         env.execute();
     }
