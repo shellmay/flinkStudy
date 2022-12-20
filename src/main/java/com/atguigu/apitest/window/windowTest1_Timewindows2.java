@@ -2,14 +2,19 @@ package com.atguigu.apitest.window;
 
 
 import com.atguigu.apitest.beans.SensorReading;
+import org.apache.commons.collections.IteratorUtils;
 import org.apache.flink.api.common.functions.AggregateFunction;
+import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.util.Collector;
+import org.apache.flink.util.IterableUtils;
 
-public class windowTest1_Timewindows {
+public class windowTest1_Timewindows2 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
@@ -28,28 +33,14 @@ public class windowTest1_Timewindows {
 
             return new SensorReading(sensor[0], new Long(sensor[1]), new Double(sensor[2]));
         });
-        //开窗测试，增量聚合函数
+        //开窗测试,全窗口函数
         DataStream<Integer> resultStream = dataStream.keyBy("id")
                 .timeWindow(Time.seconds(15))
-                .aggregate(new AggregateFunction<SensorReading, Integer, Integer>() {
+                .apply(new WindowFunction<SensorReading, Integer, Tuple, TimeWindow>() {
                     @Override
-                    public Integer createAccumulator() {
-                        return 0;
-                    }
-
-                    @Override
-                    public Integer add(SensorReading sensorReading, Integer integer) {
-                        return integer + 1;
-                    }
-
-                    @Override
-                    public Integer getResult(Integer integer) {
-                        return integer;
-                    }
-
-                    @Override
-                    public Integer merge(Integer integer, Integer acc1) {
-                        return integer + acc1;
+                    public void apply(Tuple tuple, TimeWindow timeWindow, Iterable<SensorReading> iterable, Collector<Integer> collector) throws Exception {
+                        Integer count = IteratorUtils.toList(iterable.iterator()).size();
+                        collector.collect(count);
                     }
                 });
         resultStream.print();
